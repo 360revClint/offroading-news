@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type VehicleResult = {
   id: string;
@@ -15,6 +16,7 @@ type VehicleResult = {
 };
 
 export function AddRigForm({ categorySlug }: { categorySlug: string }) {
+  const router = useRouter();
   const [year, setYear] = useState("");
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
@@ -44,6 +46,7 @@ export function AddRigForm({ categorySlug }: { categorySlug: string }) {
       }
 
       setResult(data.vehicle);
+      router.push(`/vehicle/${data.vehicle.slug}`);
     } catch {
       setError("Failed to connect. Try again.");
     } finally {
