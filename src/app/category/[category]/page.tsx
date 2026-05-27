@@ -5,6 +5,7 @@ import { VEHICLE_CATEGORIES } from "@/lib/constants";
 import { getVehiclesByCategory, getVehicleLabel } from "@/lib/sample-vehicles";
 import { SAMPLE_NEWS } from "@/lib/sample-news";
 import { NewsCard } from "@/components/articles/NewsCard";
+import { AddRigForm } from "@/components/vehicles/AddRigForm";
 
 type Props = {
   params: Promise<{ category: string }>;
@@ -49,6 +50,11 @@ export default async function CategoryPage({ params }: Props) {
         </h1>
         <p className="text-text-muted max-w-2xl">{category.description}</p>
       </div>
+
+      {/* Add your rig */}
+      <section className="mb-14">
+        <AddRigForm categorySlug={slug} />
+      </section>
 
       {/* Vehicle grid */}
       <section className="mb-14">
