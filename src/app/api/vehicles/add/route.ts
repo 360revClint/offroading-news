@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { year, make, model, trim, categorySlug } = body;
+    const { year, make, model, trim, categorySlug, groundClearance, tireSize, engineDisplacement } = body;
 
     if (!year || !make || !model || !categorySlug) {
       return Response.json(
@@ -27,14 +27,24 @@ export async function POST(request: Request) {
       return Response.json({ vehicle: existing, source: "existing" });
     }
 
-    const anthropic = new Anthropic();
-    const message = await anthropic.messages.create({
-      model: "claude-sonnet-4-5-20241022",
-      max_tokens: 512,
-      messages: [
-        {
-          role: "user",
-          content: `You are a vehicle specs database. Return ONLY valid JSON for the ${vehicleName}. No markdown, no explanation.
+    let specs = {
+      groundClearance: groundClearance ?? null,
+      tireSize: tireSize ?? null,
+      engineDisplacement: engineDisplacement ?? null,
+    };
+
+    const hasUserSpecs = groundClearance || tireSize || engineDisplacement;
+
+    if (!hasUserSpecs && process.env.ANTHROPIC_API_KEY) {
+      try {
+        const anthropic = new Anthropic();
+        const message = await anthropic.messages.create({
+          model: "claude-sonnet-4-5-20241022",
+          max_tokens: 512,
+          messages: [
+            {
+              role: "user",
+              content: `You are a vehicle specs database. Return ONLY valid JSON for the ${vehicleName}. No markdown, no explanation.
 
 {
   "groundClearance": <inches as number or null if unknown>,
@@ -42,36 +52,31 @@ export async function POST(request: Request) {
   "engineDisplacement": "<displacement string or null>",
   "valid": <true if this is a real vehicle that exists, false if not>
 }`,
-        },
-      ],
-    });
+            },
+          ],
+        });
 
-    const text =
-      message.content[0].type === "text" ? message.content[0].text : "";
+        const text =
+          message.content[0].type === "text" ? message.content[0].text : "";
+        const aiSpecs = JSON.parse(text);
 
-    let specs: {
-      groundClearance: number | null;
-      tireSize: string | null;
-      engineDisplacement: string | null;
-      valid: boolean;
-    };
+        if (aiSpecs.valid === false) {
+          return Response.json(
+            {
+              error: `"${vehicleName}" doesn't appear to be a real vehicle. Check the year, make, and model.`,
+            },
+            { status: 400 }
+          );
+        }
 
-    try {
-      specs = JSON.parse(text);
-    } catch {
-      return Response.json(
-        { error: "Failed to parse vehicle specs from AI." },
-        { status: 500 }
-      );
-    }
-
-    if (!specs.valid) {
-      return Response.json(
-        {
-          error: `"${vehicleName}" doesn't appear to be a real vehicle. Check the year, make, and model.`,
-        },
-        { status: 400 }
-      );
+        specs = {
+          groundClearance: aiSpecs.groundClearance ?? null,
+          tireSize: aiSpecs.tireSize ?? null,
+          engineDisplacement: aiSpecs.engineDisplacement ?? null,
+        };
+      } catch {
+        // AI lookup failed — continue with user-provided or null specs
+      }
     }
 
     const category = await db.vehicleCategory.findUnique({

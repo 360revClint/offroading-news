@@ -97,6 +97,9 @@ export function AddRigForm({ categorySlug }: { categorySlug: string }) {
   const [make, setMake] = useState("");
   const [model, setModel] = useState("");
   const [trim, setTrim] = useState("");
+  const [groundClearance, setGroundClearance] = useState("");
+  const [tireSize, setTireSize] = useState("");
+  const [engineDisplacement, setEngineDisplacement] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<VehicleResult | null>(null);
@@ -124,7 +127,16 @@ export function AddRigForm({ categorySlug }: { categorySlug: string }) {
       const res = await fetch("/api/vehicles/add", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ year, make, model, trim, categorySlug }),
+        body: JSON.stringify({
+          year,
+          make,
+          model,
+          trim,
+          categorySlug,
+          groundClearance: groundClearance ? parseFloat(groundClearance) : undefined,
+          tireSize: tireSize || undefined,
+          engineDisplacement: engineDisplacement || undefined,
+        }),
       });
 
       const data = await res.json();
@@ -264,6 +276,59 @@ export function AddRigForm({ categorySlug }: { categorySlug: string }) {
               onChange={(e) => setTrim(e.target.value)}
               className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-text-bright placeholder:text-text-dim focus:border-accent focus:outline-none"
               placeholder="Rubicon"
+            />
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label
+              htmlFor="groundClearance"
+              className="mono text-xs text-text-dim block mb-1"
+            >
+              Clearance (in.)
+            </label>
+            <input
+              id="groundClearance"
+              type="number"
+              step="0.1"
+              min="0"
+              value={groundClearance}
+              onChange={(e) => setGroundClearance(e.target.value)}
+              className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-text-bright placeholder:text-text-dim focus:border-accent focus:outline-none"
+              placeholder="10.8"
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="tireSize"
+              className="mono text-xs text-text-dim block mb-1"
+            >
+              Tire size
+            </label>
+            <input
+              id="tireSize"
+              type="text"
+              value={tireSize}
+              onChange={(e) => setTireSize(e.target.value)}
+              className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-text-bright placeholder:text-text-dim focus:border-accent focus:outline-none"
+              placeholder='33"'
+            />
+          </div>
+          <div>
+            <label
+              htmlFor="engineDisplacement"
+              className="mono text-xs text-text-dim block mb-1"
+            >
+              Engine
+            </label>
+            <input
+              id="engineDisplacement"
+              type="text"
+              value={engineDisplacement}
+              onChange={(e) => setEngineDisplacement(e.target.value)}
+              className="w-full rounded border border-border bg-surface px-3 py-2 text-sm text-text-bright placeholder:text-text-dim focus:border-accent focus:outline-none"
+              placeholder="3.6L V6"
             />
           </div>
         </div>
